@@ -1,4 +1,5 @@
 {-# LANGUAGE ForeignFunctionInterface #-}
+{-# LANGUAGE InterruptibleFFI         #-}
 --------------------------------------------------------------------
 -- |
 -- Module    : Network.Curl.Easy
@@ -199,7 +200,7 @@ foreign import ccall
 foreign import ccall
   "curl/easy.h curl_easy_init" easy_initialize :: IO CurlH
 
-foreign import ccall
+foreign import ccall interruptible
   "curl/easy.h curl_easy_perform" easy_perform_prim :: CurlH -> IO CInt
 
 foreign import ccall
