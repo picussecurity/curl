@@ -25,7 +25,8 @@ module Network.Curl.Easy
 
         , curl_global_init    -- :: CInt -> IO CurlCode
         , curl_global_cleanup -- :: IO ()
-	
+        , curl_easy_send
+        , curl_easy_recv
 	, curl_version_number -- :: IO Int
 	, curl_version_string -- :: IO String
         ) where
@@ -39,11 +40,14 @@ import Network.Curl.Debug
 
 import Data.IORef(IORef)
 import Foreign.Ptr
-import Foreign.Marshal.Alloc(free)
+import Foreign.Marshal.Alloc(free, alloca, allocaBytes)
 import Foreign.C.Types
 import Foreign.C.String
+import Foreign.Storable
 import Control.Monad
 import Data.Maybe
+
+import qualified Data.ByteString as BS
 
 -- | Initialise a curl instance
 initialize :: IO Curl
@@ -60,6 +64,28 @@ duphandle hh = curlPrim hh $ \r h ->
   do h1      <- easy_duphandle h
      cleanup <- shareCleanup r
      mkCurlWithCleanup h1 cleanup
+
+curl_easy_send :: Curl -> BS.ByteString -> IO Int
+curl_easy_send hh bs =
+  BS.useAsCString bs $ \bufferPtr ->
+    alloca $ \sizeRet ->
+      curlPrim hh $ \_ h -> do
+        rc <- easy_send h bufferPtr (CSize $ fromIntegral (BS.length bs)) sizeRet
+        case rc of
+          0 -> peek sizeRet >>= \(CSize size) -> pure (fromIntegral size)
+          _ -> fail ("curl_easy_send: " ++ show (toCode rc))
+
+curl_easy_recv :: Curl -> Int -> IO BS.ByteString
+curl_easy_recv hh len =
+  alloca $ \nPtr ->
+    allocaBytes len $ \buf ->
+      curlPrim hh $ \_ h -> do
+        rc <- easy_recv h buf (fromIntegral len) nPtr
+        case rc of
+          0 -> do
+            n <- fromIntegral <$> peek nPtr
+            BS.packCStringLen (castPtr buf, n)
+          _ -> fail ("curl_easy_recv: " ++ show (toCode rc))
 
 setopt :: Curl
        -> CurlOption
@@ -154,12 +180,11 @@ curl_version_number :: IO Int
 curl_version_number = do
   x <- curl_version_num 
   return (fromIntegral x)
-  
+
 curl_version_string :: IO String
 curl_version_string = do
   cs <- curl_version_str
   peekCString cs
-
 -- FFI decls
 
 
@@ -200,6 +225,12 @@ foreign import ccall
   "curl_easy_setopt_ptr" easy_setopt_ptr :: CurlH -> Int -> Ptr a -> IO CInt
 
 foreign import ccall
+  "curl_easy_send" easy_send :: CurlH -> Ptr a -> CSize -> Ptr CSize -> IO CInt
+
+foreign import ccall
+  "curl_easy_recv" easy_recv :: CurlH -> Ptr a -> CSize -> Ptr CSize -> IO CInt
+
+foreign import ccall
   "curl_easy_setopt_ptr" easy_setopt_fptr :: CurlH -> Int -> FunPtr a -> IO CInt
 
 foreign import ccall
@@ -223,5 +254,3 @@ foreign import ccall "wrapper"
 
 foreign import ccall "wrapper"
    mkSslCtxtFun :: SSLCtxtFunction -> IO (FunPtr SSLCtxtFunction)
-
-
