@@ -65,27 +65,24 @@ duphandle hh = curlPrim hh $ \r h ->
      cleanup <- shareCleanup r
      mkCurlWithCleanup h1 cleanup
 
-curl_easy_send :: Curl -> BS.ByteString -> IO Int
+curl_easy_send :: Curl -> BS.ByteString -> IO (CurlCode, Int)
 curl_easy_send hh bs =
   BS.useAsCString bs $ \bufferPtr ->
     alloca $ \sizeRet ->
       curlPrim hh $ \_ h -> do
         rc <- easy_send h bufferPtr (CSize $ fromIntegral (BS.length bs)) sizeRet
-        case rc of
-          0 -> peek sizeRet >>= \(CSize size) -> pure (fromIntegral size)
-          _ -> fail ("curl_easy_send: " ++ show (toCode rc))
+        CSize size <- peek sizeRet
+        pure (toCode rc, fromIntegral size)
 
-curl_easy_recv :: Curl -> Int -> IO BS.ByteString
+curl_easy_recv :: Curl -> Int -> IO (CurlCode, BS.ByteString)
 curl_easy_recv hh len =
   alloca $ \nPtr ->
     allocaBytes len $ \buf ->
       curlPrim hh $ \_ h -> do
         rc <- easy_recv h buf (fromIntegral len) nPtr
-        case rc of
-          0 -> do
-            n <- fromIntegral <$> peek nPtr
-            BS.packCStringLen (castPtr buf, n)
-          _ -> fail ("curl_easy_recv: " ++ show (toCode rc))
+        n <- fromIntegral <$> peek nPtr
+        resultBS <- BS.packCStringLen (castPtr buf, n)
+        pure (toCode rc, resultBS)
 
 setopt :: Curl
        -> CurlOption
