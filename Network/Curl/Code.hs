@@ -102,6 +102,16 @@ data CurlCode
  | CurlAgain
  | CurlSSLCRLBadFile
  | CurlSSLIssuerError
+ | CurlFTPPretFailed
+ | CurlRTSPCSEQError
+ | CurlRTSPSessionError
+ | CurlFTPBadFileList
+ | CurlChunkFailed
+ | CurlNoConnectionAvailable
+ | CurlSSLPinnedPubkeyNotMatch
+ | CurlSSLInvalidCertStatus
+ | CurlHTTP2Stream
+ | CurlRecursiveAPICall
    deriving ( Eq, Show, Enum )
 
 toCode :: CInt -> CurlCode
