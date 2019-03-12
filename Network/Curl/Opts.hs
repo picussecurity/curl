@@ -181,6 +181,9 @@ data CurlOption
  | CurlUserPassword  String
  | CurlProxyUser     String
  | CurlProxyPassword String
+ | CurlTcpKeepalive  Long
+ | CurlTcpKeepIdle   Long
+ | CurlTcpKeepIntvl  Long
   
 
 instance Show CurlOption where
@@ -495,6 +498,9 @@ unmarshallOption um c =
   CurlUserPassword x        -> u_string um (l 174) x
   CurlProxyUser x           -> u_string um (l 175) x
   CurlProxyPassword x       -> u_string um (l 176) x
+  CurlTcpKeepalive x        -> u_long um (l 213) x
+  CurlTcpKeepIdle x         -> u_long um (l 214) x
+  CurlTcpKeepIntvl x        -> u_long um (l 215) x
 
 data Unmarshaller a
  = Unmarshaller
@@ -706,3 +712,7 @@ showCurlOption o =
     CurlUserPassword  p -> "CurlUserPassword " ++ show p
     CurlProxyUser     p -> "CurlProxyUser " ++ show p
     CurlProxyPassword p -> "CurlProxyPassword " ++ show p
+    CurlTcpKeepalive  p -> "CurlTcpKeepalive " ++ show p
+    CurlTcpKeepIdle   p -> "CurlTcpKeepIdle " ++ show p
+    CurlTcpKeepIntvl  p -> "CurlTcpKeepIntvl " ++ show p
+
