@@ -184,7 +184,8 @@ data CurlOption
  | CurlTcpKeepalive  Long
  | CurlTcpKeepIdle   Long
  | CurlTcpKeepIntvl  Long
-  
+ | CurlSSLEnableNPN  Long
+ | CurlSSLEnableALPN Long
 
 instance Show CurlOption where
   show x = showCurlOption x
@@ -501,6 +502,8 @@ unmarshallOption um c =
   CurlTcpKeepalive x        -> u_long um (l 213) x
   CurlTcpKeepIdle x         -> u_long um (l 214) x
   CurlTcpKeepIntvl x        -> u_long um (l 215) x
+  CurlSSLEnableNPN x        -> u_long um (l 225) x
+  CurlSSLEnableALPN x       -> u_long um (l 226) x
 
 data Unmarshaller a
  = Unmarshaller
@@ -715,4 +718,7 @@ showCurlOption o =
     CurlTcpKeepalive  p -> "CurlTcpKeepalive " ++ show p
     CurlTcpKeepIdle   p -> "CurlTcpKeepIdle " ++ show p
     CurlTcpKeepIntvl  p -> "CurlTcpKeepIntvl " ++ show p
+    CurlSSLEnableNPN  p -> "CurlSSLEnableNPN " ++ show p
+    CurlSSLEnableALPN p -> "CurlSSLEnableALPN " ++ show p
+
 
